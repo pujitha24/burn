@@ -22,12 +22,16 @@ mod threading {
 
 #[cfg(not(feature = "std"))]
 mod threading {
-    pub(super) use burn_std::sync::ThreadId;
     pub(super) use hashbrown::HashMap;
+
+    /// Thread identifier for `no_std` targets, which are assumed to be single-threaded: all callers
+    /// share one slot.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+    pub(super) struct ThreadId;
 
     #[inline(always)]
     pub(super) fn get_thread_current_id() -> ThreadId {
-        panic!("Current thread id is not available")
+        ThreadId
     }
 }
 
@@ -226,5 +230,25 @@ impl<const D: usize> RunningState<Tensor<D>> {
             let mut value_old = self.value.lock();
             *value_old = value;
         }
+    }
+}
+
+#[cfg(all(test, not(feature = "std")))]
+mod tests {
+    use super::*;
+    use burn_tensor::TensorData;
+
+    #[test]
+    fn update_does_not_panic_without_std() {
+        let device = Default::default();
+        let state = RunningState::new(Tensor::<1>::from_data([1.0, 1.0], &device));
+
+        state.update(Tensor::from_data([2.0, 4.0], &device));
+        state.update(Tensor::from_data([4.0, 6.0], &device));
+
+        state
+            .value_sync()
+            .into_data()
+            .assert_eq(&TensorData::from([4.0, 6.0]), false);
     }
 }

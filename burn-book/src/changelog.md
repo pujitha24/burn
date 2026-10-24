@@ -217,6 +217,7 @@ loading those checkpoints by filtering to `linear_inner` and `linear_outer`.
 - Fix CPU non-maximum-suppression results and restore GPU acceleration for connected components.
   ([#6019](https://github.com/tracel-ai/burn/pull/6019),
   [#6003](https://github.com/tracel-ai/burn/pull/6003))
+- Fix `BatchNorm` training panicking on `no_std` targets, which are treated as single-threaded.
 
 ### Tensors and backends
 
